@@ -1,0 +1,29 @@
+# US-045: custom runtime detection rules, version controlled
+customRules:
+  secureshop-rules.yaml: |-
+    - rule: Shell Spawned in SecureShop Container
+      desc: Detect an interactive shell spawned inside the secureshop application container
+      condition: >
+        spawned_process and container and
+        k8s.ns.name = "secureshop" and
+        proc.name in (bash, sh, zsh)
+      output: >
+        Shell spawned in SecureShop container
+        (user=%user.name container=%container.name pod=%k8s.pod.name command=%proc.cmdline)
+      priority: WARNING
+      tags: [secureshop, shell]
+
+    - rule: Unexpected Outbound Connection from SecureShop
+      desc: Detect network connections to unexpected destinations from the app pod
+      condition: >
+        outbound and container and
+        k8s.ns.name = "secureshop" and
+        not fd.sip in (allowed_secureshop_destinations)
+      output: >
+        Unexpected outbound connection from SecureShop
+        (dest=%fd.sip:%fd.sport pod=%k8s.pod.name)
+      priority: WARNING
+      tags: [secureshop, network]
+
+    - list: allowed_secureshop_destinations
+      items: []  # populated with Vault, DB, and internal service IPs during rollout

@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secureshop-app-binding
+  namespace: secureshop
+subjects:
+  - kind: ServiceAccount
+    name: secureshop
+    namespace: secureshop
+roleRef:
+  kind: Role
+  name: secureshop-app-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secureshop-developers-binding
+  namespace: secureshop
+subjects:
+  - kind: Group
+    name: "secureshop-developers"   # mapped from AWS IAM group via EKS access entries (US-029)
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: secureshop-developer-role
+  apiGroup: rbac.authorization.k8s.io

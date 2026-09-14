@@ -1,0 +1,17 @@
+# US-044: Deploy Falco to EKS (helm install falco falcosecurity/falco -n falco --create-namespace -f falco-values.yaml)
+driver:
+  kind: ebpf
+
+falco:
+  jsonOutput: true
+  rules_file:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/falco_rules.local.yaml
+    - /etc/falco/rules.d
+
+falcosidekick:
+  enabled: true
+  config:
+    slack:
+      webhookurl: "${SLACK_WEBHOOK_URL}"   # sourced from a K8s secret, not committed to Git
+      minimumpriority: warning

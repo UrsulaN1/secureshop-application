@@ -1,0 +1,9 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata: {name: require-secure-containers}
+spec:
+  validationFailureAction: Audit
+  rules:
+  - name: require-non-root
+    match: {any: [{resources: {kinds: [Pod]}}]}
+    validate: {message: "Non-root required", pattern: {spec: {containers: [{securityContext: {runAsNonRoot: true, allowPrivilegeEscalation: false}}]}}}

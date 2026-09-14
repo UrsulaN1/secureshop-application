@@ -1,0 +1,15 @@
+# US-050: Deploy Loki for centralized logging (helm install loki grafana/loki -n monitoring -f loki-values.yaml)
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem   # swap to S3 backend for production retention (US-050 retention policy)
+  limits_config:
+    retention_period: 336h  # 14 days
+
+promtail:
+  enabled: true
+  config:
+    clients:
+      - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push

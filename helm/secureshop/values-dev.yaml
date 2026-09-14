@@ -1,0 +1,8 @@
+# US-039: dev environment overrides
+replicaCount: 1
+image:
+  tag: "dev"
+autoscaling:
+  enabled: false
+vault:
+  secretPath: secret/data/secureshop/dev/db

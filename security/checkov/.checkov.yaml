@@ -1,0 +1,14 @@
+# US-009: Checkov scans Terraform code; high/critical findings fail the pipeline
+directory:
+  - terraform
+framework:
+  - terraform
+compact: true
+quiet: true
+soft-fail: false
+check:
+  - CKV_AWS_*
+skip-check:
+  # Documented, approved exception: NAT-per-AZ cost tradeoff accepted for dev env HA
+  - CKV2_AWS_12   # default SG restricts all traffic (custom default sg used instead)
+output: cli

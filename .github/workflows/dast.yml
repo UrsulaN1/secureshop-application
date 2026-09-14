@@ -1,0 +1,26 @@
+# US-058: OWASP ZAP dynamic application security testing against staging
+name: DAST - OWASP ZAP Baseline Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"   # nightly against staging
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://staging.secureshop.internal"
+          rules_file_name: "security/zap/zap-baseline.conf"
+          cmd_options: "-a"
+          fail_action: true
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: report_html.html

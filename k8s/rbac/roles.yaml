@@ -1,0 +1,36 @@
+# US-031: Kubernetes RBAC - least-privilege roles
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secureshop-app-role
+  namespace: secureshop
+rules:
+  # Workload identity only needs to read its own config/secrets, nothing else
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secureshop-developer-role
+  namespace: secureshop
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secureshop-readonly-clusterrole
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]

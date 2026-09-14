@@ -1,0 +1,3 @@
+replicaCount: 2
+vault:
+  secretPath: secret/data/secureshop/staging/db

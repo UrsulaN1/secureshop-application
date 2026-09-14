@@ -1,0 +1,35 @@
+# US-035: Deploy HashiCorp Vault (Helm chart: hashicorp/vault)
+# helm install vault hashicorp/vault -n vault --create-namespace -f vault-values.yaml
+server:
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+
+  # Auto-unseal via AWS KMS - avoids manual unseal keys in prod (documented in runbook)
+  extraEnvironmentVars:
+    VAULT_SEAL_TYPE: awskms
+
+  auditStorage:
+    enabled: true
+    size: 10Gi
+
+  resources:
+    requests: { cpu: 250m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+  # US-034: hardened workload config
+  securityContext:
+    pod:
+      runAsNonRoot: true
+      runAsUser: 100
+    container:
+      allowPrivilegeEscalation: false
+
+injector:
+  enabled: true    # Vault Agent sidecar injector (US-037)
+
+ui:
+  enabled: true

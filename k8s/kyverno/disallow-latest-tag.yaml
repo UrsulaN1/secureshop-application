@@ -1,0 +1,21 @@
+# US-027: production deployments must not rely solely on the mutable 'latest' tag
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secureshop"]
+      validate:
+        message: "Images must not use the 'latest' tag; use immutable commit-SHA tags."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"

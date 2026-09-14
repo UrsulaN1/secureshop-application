@@ -1,0 +1,39 @@
+{
+  "title": "SecureShop - Application Overview",
+  "uid": "secureshop-overview",
+  "tags": ["secureshop"],
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Rate",
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{application=\"secureshop\"}[5m])) by (uri, status)" }]
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate (5xx)",
+      "targets": [{ "expr": "sum(rate(http_server_requests_seconds_count{application=\"secureshop\",status=~\"5..\"}[5m]))" }]
+    },
+    {
+      "type": "graph",
+      "title": "Pod CPU Usage",
+      "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"secureshop\"}[5m])) by (pod)" }]
+    },
+    {
+      "type": "graph",
+      "title": "Pod Memory Usage",
+      "targets": [{ "expr": "sum(container_memory_working_set_bytes{namespace=\"secureshop\"}) by (pod)" }]
+    },
+    {
+      "type": "table",
+      "title": "Pod Health",
+      "targets": [{ "expr": "kube_pod_status_phase{namespace=\"secureshop\"}" }]
+    },
+    {
+      "type": "logs",
+      "title": "Recent Application Logs (Loki)",
+      "targets": [{ "expr": "{namespace=\"secureshop\"}" }]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

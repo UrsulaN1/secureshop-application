@@ -1,0 +1,24 @@
+# Enforces US-024/US-054: only Cosign-signed images from our ECR may run
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-secureshop-image-signature
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secureshop"]
+      verifyImages:
+        - imageReferences:
+            - "*.dkr.ecr.*.amazonaws.com/secureshop*"
+          attestors:
+            - count: 1
+              entries:
+                - keyless:
+                    subject: "https://github.com/secureshop-org/secureshop/.github/workflows/cd.yml@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"

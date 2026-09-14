@@ -1,0 +1,31 @@
+# US-041/US-042: ArgoCD Application - automated GitOps sync
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: secureshop-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/secureshop-org/secureshop-gitops.git
+    targetRevision: main
+    path: helm/secureshop
+    helm:
+      valueFiles:
+        - values.yaml
+        - environments/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: secureshop
+  syncPolicy:
+    automated:
+      prune: true       # removes resources no longer defined in Git
+      selfHeal: true     # reverts manual/out-of-band cluster drift
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

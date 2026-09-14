@@ -1,0 +1,29 @@
+# US-010: application configuration is externalized (no hardcoded secrets/config)
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: secureshop
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: secureshop
+
+# Example of externalized, non-secret config. Real secrets (DB creds, API keys)
+# are injected at runtime by the Vault Agent Injector - see US-036/US-037
+# and are NEVER placed in this file or committed to Git.
+secureshop:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/secureshop}
+    username: ${DB_USERNAME:}   # injected via Vault
+    password: ${DB_PASSWORD:}   # injected via Vault

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: secureshop
+description: Helm chart for the SecureShop e-commerce application (US-038)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

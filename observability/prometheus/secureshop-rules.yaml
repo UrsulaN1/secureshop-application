@@ -1,0 +1,7 @@
+groups:
+- name: secureshop
+  rules:
+  - alert: SecureShopUnavailable
+    expr: up{job="secureshop"} == 0
+    for: 5m
+    labels: {severity: critical}

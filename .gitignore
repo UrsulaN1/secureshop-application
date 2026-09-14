@@ -1,0 +1,121 @@
+# ============================================================
+# SecureShop Application - Git Ignore
+# ============================================================
+
+
+# ------------------------------------------------------------
+# Java / Maven
+# ------------------------------------------------------------
+
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+
+# ------------------------------------------------------------
+# IDE / Editor
+# ------------------------------------------------------------
+
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+
+# ------------------------------------------------------------
+# Terraform
+# ------------------------------------------------------------
+
+# Local Terraform working directory
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Terraform plans
+*.tfplan
+terraform.tfplan
+
+# Terraform variable files may contain secrets
+*.tfvars
+*.tfvars.json
+
+# Allow example variable files
+!*.tfvars.example
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ------------------------------------------------------------
+# Environment / Secrets
+# ------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+*-credentials.json
+
+credentials
+
+secrets/
+.aws/
+
+# Vault tokens
+.vault-token
+
+
+# ------------------------------------------------------------
+# Security Scan / Generated Reports
+# ------------------------------------------------------------
+
+security-reports/
+dependency-check-report/
+dependency-check-report.html
+
+# Sonar / scanner generated files
+.scannerwork/
+
+# Test / coverage reports
+coverage/
+
+
+# ------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------
+
+*.log
+logs/
+
+
+# ------------------------------------------------------------
+# Operating System
+# ------------------------------------------------------------
+
+.DS_Store
+Thumbs.db
+
+
+# ------------------------------------------------------------
+# Temporary Files
+# ------------------------------------------------------------
+
+*.tmp
+*.temp
+*.bak
