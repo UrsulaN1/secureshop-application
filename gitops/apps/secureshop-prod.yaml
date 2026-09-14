@@ -1,0 +1,21 @@
+# US-040: production changes require PR review before merge to the GitOps repo's main branch;
+# ArgoCD only auto-syncs what has already been reviewed and merged (manual sync as extra gate is optional).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: secureshop-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/secureshop-org/secureshop-gitops.git
+    targetRevision: main
+    path: helm/secureshop
+    helm:
+      valueFiles: [values.yaml, environments/prod/values.yaml]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: secureshop
+  syncPolicy:
+    automated: { prune: false, selfHeal: true }  # prune requires manual confirmation in prod
+    syncOptions: [CreateNamespace=true]

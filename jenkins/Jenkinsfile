@@ -1,0 +1,1 @@
+pipeline { agent any; stages { stage('Build'){steps{dir('app'){sh 'mvn clean test package'}}} stage('Checkov'){steps{sh 'checkov -d terraform'}} stage('Image'){steps{sh 'docker build -t secureshop:${BUILD_NUMBER} -f docker/Dockerfile app'}} stage('Trivy'){steps{sh 'trivy image --severity HIGH,CRITICAL --exit-code 1 secureshop:${BUILD_NUMBER}'}} } }

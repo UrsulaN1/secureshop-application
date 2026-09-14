@@ -1,0 +1,13 @@
+replicaCount: 3
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10
+vault:
+  secretPath: secret/data/secureshop/prod/db
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi

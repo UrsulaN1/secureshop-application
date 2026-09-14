@@ -1,0 +1,5 @@
+- rule: SecureShop Shell Spawned
+  desc: Detect shell execution in SecureShop
+  condition: spawned_process and container and container.name = "secureshop" and proc.name in (bash, sh)
+  output: "Shell spawned in SecureShop"
+  priority: WARNING

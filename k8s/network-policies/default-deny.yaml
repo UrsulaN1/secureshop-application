@@ -1,0 +1,11 @@
+# US-032: default-deny baseline - all traffic denied unless explicitly allowed
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: secureshop
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

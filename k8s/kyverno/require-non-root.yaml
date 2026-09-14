@@ -1,0 +1,24 @@
+# US-033/US-034: Kyverno enforces hardened workload configuration
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-non-root-user
+  annotations:
+    policies.kyverno.io/title: Require Non-Root Containers
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-runAsNonRoot
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secureshop"]
+      validate:
+        message: "Containers must set runAsNonRoot: true"
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true

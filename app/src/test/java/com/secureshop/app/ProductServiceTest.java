@@ -1,0 +1,1 @@
+package com.secureshop.app; import static org.junit.jupiter.api.Assertions.*; import org.junit.jupiter.api.*; import com.secureshop.app.service.*; class ProductServiceTest { @Test void product(){assertEquals("Secure Laptop",new ProductService().byId(1L).name());} }

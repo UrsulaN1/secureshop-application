@@ -1,0 +1,56 @@
+# Allow only required application communication:
+# ingress via the ingress-controller namespace, egress to DNS + Vault + database
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-secureshop-ingress
+  namespace: secureshop
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: secureshop
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-secureshop-egress
+  namespace: secureshop
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: secureshop
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    - to:
+        - ipBlock:
+            cidr: 10.20.0.0/16   # database / internal AWS resources
+      ports:
+        - protocol: TCP
+          port: 5432

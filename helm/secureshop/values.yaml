@@ -1,0 +1,57 @@
+# US-038/US-039: base values, overridden per environment
+replicaCount: 2
+
+image:
+  repository: "REPLACE_WITH_ECR_REPO_URL"
+  tag: "latest"        # overridden by CI with the immutable commit SHA (US-027)
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: secureshop
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# US-037: Vault Agent injector annotations - pulled into pod template
+vault:
+  enabled: true
+  role: secureshop
+  secretPath: secret/data/secureshop/dev/db
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8080
+
+ingress:
+  enabled: false

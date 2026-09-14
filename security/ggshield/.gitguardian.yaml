@@ -1,0 +1,9 @@
+# US-016: GitGuardian / ggshield configuration
+version: 2
+secret:
+  show-secrets: false
+  exit-zero: false          # non-zero exit on detection => pipeline fails
+  ignored-matches: []       # documented, approved false-positive exceptions only
+  ignored-paths:
+    - "**/*.md"
+    - "**/test/resources/**"
