@@ -1,7 +1,7 @@
 # US-025: Create ECR repository
 # US-027: immutable image tagging strategy
 resource "aws_ecr_repository" "this" {
-  name                 = "${var.project_name}"
+  name                 = var.project_name
   image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {

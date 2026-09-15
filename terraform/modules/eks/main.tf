@@ -28,7 +28,7 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     endpoint_private_access = true
-    endpoint_public_access  = true  # restrict via public_access_cidrs in production
+    endpoint_public_access  = true # restrict via public_access_cidrs in production
   }
 
   # Encrypt Kubernetes secrets at rest with a dedicated KMS key
