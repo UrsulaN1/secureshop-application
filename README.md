@@ -348,13 +348,35 @@ The workflow should contain a Slack notification step similar to the following:
 ```bash
 git switch main
 git pull --ff-only origin main
-
 git switch -c <next-jira-issue>  # Create and switch to a new local feature branch.
-
+#Make your Terraform changes, then execute the next set of commands
 git status
 git add .
 git commit -m "<your-jira-story-summary>"
 git push -u origin <next-jira-issue-feature-branch-created>
+```
+
+Open the feature branch in GitHub and **Open pull request**
+
+**`If however, you made changes in another branch and want to push those changes to a different feature branch, do the following instead:`**
+
+```bash
+git status
+git stash push -u -m "US-005 work temporarily saved from US-004"    # stash everything, including any new/untracked files
+git stash list                                                      # Verify Git actually saved it:
+git stash show --stat stash@{0}                                     # For extra reassurance, inspect what is inside:
+git status                                                          # Now your working directory should be clean:
+git switch main                                                     # Now switch to main
+git pull --ff-only origin main                                      # Update main
+git switch -c US-005-AWS-architecture-design                        # Then create the correct branch
+git stash apply stash@{0}                                           # Now restore your work onto US-005
+git status                                                          # Check that all your changes returned
+git diff                                                            # You should see those files modified on US-005
+git add .                                                           # Now stage them on the correct branch
+git commit -m "US-005-AWS-architecture-design"                      # And commit them to the correct branch
+git push -u origin US-005-AWS-architecture-design                   # Push the new branch:
+git log --oneline -5                                                # Confirm the commit is safely on
+git stash drop stash@{0}                                            # verify GitHub has the branch, and safely remove the stash
 ```
 
 ---
@@ -381,8 +403,10 @@ The architecture implemented by the Terraform in this repo:
 your export as `docs/architecture.png`) reflecting the modules under `terraform/modules/`.
 
 ### US-006 — Create the Terraform project structure
+
 Structure (already in this repo):
-```
+
+```text
 terraform/
   versions.tf        # provider version pins
   providers.tf        # AWS provider + default tags
@@ -396,7 +420,9 @@ terraform/
     eks/    (main.tf, variables.tf, outputs.tf)
   environments/dev/terraform.tfvars.example
 ```
+
 Verify formatting and initialization:
+
 ```bash
 cd terraform
 terraform fmt -recursive
@@ -405,34 +431,44 @@ terraform validate
 ```
 
 ### US-007 — Provision AWS networking with Terraform
+
 Implemented in `terraform/modules/vpc/main.tf`: VPC, IGW, 3 public + 3 private subnets, one NAT
 gateway per AZ, route tables, and a default restrictive security group. Provisioned automatically
 when you run `terraform apply` in the next step (after configuring remote state).
 
 ### US-008 — Configure Terraform remote state
+
 1. One-time bootstrap of the S3 bucket + DynamoDB lock table:
-   ```bash
-   ./scripts/bootstrap-backend.sh
-   ```
+
+    ```bash
+    ./scripts/bootstrap-backend.sh
+    ```
+
 2. Update `terraform/backend.tf` with the bucket name it prints.
 3. Initialize against the real backend:
+
    ```bash
    cd terraform
    terraform init -migrate-state
    ```
+
    State is now versioned, encrypted, access-restricted, and lock-protected — and is excluded from
    Git by `.gitignore`.
 
 ### US-009 — Scan Terraform with Checkov
+
 Config: `security/checkov/.checkov.yaml`. Run locally:
+
 ```bash
 checkov -d terraform --config-file security/checkov/.checkov.yaml
 ```
+
 This same command runs automatically in `.github/workflows/ci.yml` (`terraform-security` job).
 High/critical findings fail the pipeline; any accepted false positive must be added to
 `skip-check` in `.checkov.yaml` with a comment explaining why (documented exception).
 
 Provision the infrastructure once the scan is clean:
+
 ```bash
 terraform plan  -var-file=environments/dev/terraform.tfvars.example
 terraform apply -var-file=environments/dev/terraform.tfvars.example
@@ -441,6 +477,7 @@ terraform apply -var-file=environments/dev/terraform.tfvars.example
 ---
 
 ## EPIC 3 — Application Foundation & Automated Testing
+
 **Owner: Developer** · Technology: Maven, JUnit
 
 ### US-010 — Create the SecureShop application

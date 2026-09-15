@@ -1,5 +1,5 @@
 # US-007: Provision AWS networking with Terraform
-resource "aws_vpc" "this" {
+resource "aws_vpc" "secureshop_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -9,15 +9,15 @@ resource "aws_vpc" "this" {
   }
 }
 
-resource "aws_internet_gateway" "this" {
-  vpc_id = aws_vpc.this.id
+resource "aws_internet_gateway" "secureshop_vpc" {
+  vpc_id = aws_vpc.secureshop_vpc.id
   tags   = { Name = "${var.project_name}-${var.environment}-igw" }
 }
 
 # --- Public subnets ---
 resource "aws_subnet" "public" {
   count                   = length(var.availability_zones)
-  vpc_id                  = aws_vpc.this.id
+  vpc_id                  = aws_vpc.secureshop_vpc.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index)
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
@@ -32,7 +32,7 @@ resource "aws_subnet" "public" {
 # --- Private subnets (workloads/EKS nodes) ---
 resource "aws_subnet" "private" {
   count             = length(var.availability_zones)
-  vpc_id            = aws_vpc.this.id
+  vpc_id            = aws_vpc.secureshop_vpc.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 4, count.index + length(var.availability_zones))
   availability_zone = var.availability_zones[count.index]
 
@@ -48,7 +48,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 }
 
-resource "aws_nat_gateway" "this" {
+resource "aws_nat_gateway" "secureshop_vpc" {
   count         = length(var.availability_zones)
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
@@ -56,10 +56,10 @@ resource "aws_nat_gateway" "this" {
 }
 
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.secureshop_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.this.id
+    gateway_id = aws_internet_gateway.secureshop_vpc.id
   }
   tags = { Name = "${var.project_name}-${var.environment}-public-rt" }
 }
@@ -72,10 +72,10 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_route_table" "private" {
   count  = length(var.availability_zones)
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.secureshop_vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.this[count.index].id
+    nat_gateway_id = aws_nat_gateway.secureshop_vpc[count.index].id
   }
   tags = { Name = "${var.project_name}-${var.environment}-private-rt-${count.index}" }
 }
@@ -90,7 +90,7 @@ resource "aws_route_table_association" "private" {
 resource "aws_security_group" "default" {
   name        = "${var.project_name}-${var.environment}-default-sg"
   description = "Default restrictive security group"
-  vpc_id      = aws_vpc.this.id
+  vpc_id      = aws_vpc.secureshop_vpc.id
 
   egress {
     description = "Allow all outbound"
