@@ -9,6 +9,10 @@
 - **SRE** — Prometheus, Grafana, Alertmanager, logging
 - **Tech Lead** — final review for accuracy and consistency
 
+## Architectural Diagram
+
+![alt text](image.png)
+
 This README contains **only instructions** — every configuration file, manifest, and source file it references lives in this repository at the path shown. Follow the sections in order; they match the backlog's **Recommended Epic Implementation Sequence** (Epics 1 → 17).
 
 > **Note on CI/CD tooling:** The source backlog (EPIC 4, US-013–015) specifies **GitHub Actions** as the CI/CD engine, so that is what this guide implements end-to-end (`.github/workflows/ci.yml` and `cd.yml`). If your organization also standardizes on Jenkins, the same stages — Maven → JUnit → SonarQube → Dependency-Check → Docker → Trivy → Syft → Cosign → ECR — map directly onto a `Jenkinsfile`.
