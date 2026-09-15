@@ -3,10 +3,10 @@
 # uncomment / fill in the backend block below and run `terraform init -migrate-state`.
 terraform {
   backend "s3" {
-    bucket         = "secureshop-tfstate-<ACCOUNT_ID>"
-    key            = "secureshop/dev/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "secureshop-tf-locks"
-    encrypt        = true
+    bucket       = "secureshop-bucket1"
+    key          = "secureshop/dev/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
   }
 }
