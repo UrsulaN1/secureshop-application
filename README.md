@@ -262,16 +262,16 @@ Confirm that the workflow transitions are correctly reflected by your Jira board
 
 ### US-005 — Integrate Slack Notifications
 
-#### 1. Create the Slack Channel
+#### 1. Create the `secureshop-ci` Slack Channel
 
-In Slack, create the following channel:
-
-`#secureshop-ci`
+In Slack, create the following **Channel Name**: `secureshop-ci`
+**Description**: `SecureShop CI/CD, deployment, monitoring, and security notifications`
+You can make it public or private. If it is private, the person creating the Incoming Webhook must already be a member of that channel.
 
 #### 2. Create a Slack Application for SecureShop
 
-1. Open Slack's app-management page.
-2. Click **Create New App → From scratch**.
+1. Open Slack's app-management page `https://api.slack.com/apps`
+2. Click **Create an App → Blanc app**.
 3. Configure:
    - **App Name:** `SecureShop Notifications`
    - **Workspace:** `<your Slack workspace>`
@@ -279,9 +279,9 @@ In Slack, create the following channel:
 
 #### 3. Enable Incoming Webhooks
 
-1. In the Slack app configuration screen, select **Features → Incoming Webhooks**.
+1. In the Slack app configuration screen that opens, select **Features → Incoming Webhooks**.
 2. Toggle **Activate Incoming Webhooks** to **ON**.
-3. Click **Add New Webhook to Workspace**.
+3. Click **Add New Webhook** to Workspace.
 4. Select `#secureshop-ci`.
 5. Click **Allow**.
 
@@ -290,21 +290,33 @@ In Slack, create the following channel:
 Run the following from your terminal:
 
 ```bash
-read -s -p "Paste Slack webhook URL: " SLACK_WEBHOOK_URL
+read -s -p "Paste Slack webhook URL: " SLACK_WEBHOOK_URL    # Do not replace anything here. Paste as it is
 echo
 
+# Confirm that the variable exists without printing your secret
+if [ -n "$SLACK_WEBHOOK_URL" ]; then
+  echo "Slack webhook URL loaded successfully."
+else
+  echo "Slack webhook URL is empty."
+fi
+```
+
+You should see: `Slack webhook URL loaded successfully.`
+
+**Test the Webhook with:**
+
+```bash
 curl --fail-with-body \
   -X POST \
   -H 'Content-Type: application/json' \
-  --data '{"text":"✅ SecureShop Slack webhook integration test successful."}' \
+  --data '{"text":"SecureShop Slack webhook integration test successful!"}' \
   "$SLACK_WEBHOOK_URL"
 ```
 
-A successful request returns:
+A successful request returns: `ok`
+If everything is configured correctly, a message should appear in your Slack channel.
 
-```text
-ok
-```
+**IMPORTANT:** this command only stores the webhook URL temporarily in your current terminal session. It does not add it to GitHub Actions.
 
 #### 5. Store the Webhook in GitHub Actions
 
@@ -320,32 +332,20 @@ Click **Add secret**.
 
 #### 6. Verify `.github/workflows/cd.yml`
 
-From the repository root, run:
+From the **repository root**, run: [**To confirm that your cd.yml workflow is referencing the GitHub Actions secret named SLACK_WEBHOOK_URL**]
 
 ```bash
-grep -n -i "slack" .github/workflows/cd.yml
-grep -n "SLACK_WEBHOOK_URL" .github/workflows/cd.yml
+grep -n -i "slack" .github/workflows/cd.yml                      # search the file .github/workflows/cd.yml for any line containing the word slack
+grep -n "SLACK_WEBHOOK_URL" .github/workflows/cd.yml             # searches only for the exact text: SLACK_WEBHOOK_URL
 ```
 
 The workflow should contain a Slack notification step similar to the following:
 
-```yaml
-- name: Slack notification
-  if: always()
-  env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  run: |
-    curl --fail-with-body \
-      -X POST \
-      -H 'Content-Type: application/json' \
-      --data "{\"text\":\"SecureShop CD workflow completed with status: ${{ job.status }}\"}" \
-      "$SLACK_WEBHOOK_URL"
-```
+`If they return matching lines, Slack integration is already referenced in the workflow. If they return nothing, that means the searched text was not found in that file.`
 
 #### 7. Trigger GitHub Actions and Verify the CI/CD Notification
 
 ```bash
-git stash
 git switch main
 git pull --ff-only origin main
 
@@ -357,54 +357,16 @@ git commit -m "<your-jira-story-summary>"
 git push -u origin <next-jira-issue-feature-branch-created>
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ---
 
 ## EPIC 2 — AWS Foundation & Infrastructure as Code
+
 **Owner: DevOps Engineer** · Technology: AWS, Terraform, Checkov
 
 ### US-005 — AWS architecture design
+
 The architecture implemented by the Terraform in this repo:
+
 - **VPC** (`10.20.0.0/16`) spanning 3 AZs, with public subnets (NAT/ALB) and private subnets
   (EKS nodes, no direct internet ingress).
 - **EKS** cluster in the private subnets, control-plane logging enabled, secrets encrypted with a
