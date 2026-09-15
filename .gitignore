@@ -64,6 +64,7 @@ override.tf.json
 .env
 .env.*
 !.env.example
+.venv/
 
 *.pem
 *.key

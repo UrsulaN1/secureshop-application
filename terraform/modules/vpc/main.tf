@@ -20,7 +20,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.secureshop_vpc.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 4, count.index)
   availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name                                                           = "${var.project_name}-${var.environment}-public-${count.index}"
@@ -86,19 +86,19 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private[count.index].id
 }
 
-# Baseline security group: default-deny, explicit allow (least privilege)
-resource "aws_security_group" "default" {
-  name        = "${var.project_name}-${var.environment}-default-sg"
-  description = "Default restrictive security group"
-  vpc_id      = aws_vpc.secureshop_vpc.id
+# # Baseline security group: default-deny, explicit allow (least privilege)
+# resource "aws_security_group" "default" {
+#   name        = "${var.project_name}-${var.environment}-default-sg"
+#   description = "Default restrictive security group"
+#   vpc_id      = aws_vpc.secureshop_vpc.id
 
-  egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   egress {
+#     description = "Allow all outbound"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  tags = { Name = "${var.project_name}-${var.environment}-default-sg" }
-}
+#   tags = { Name = "${var.project_name}-${var.environment}-default-sg" }
+# }

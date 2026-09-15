@@ -470,8 +470,8 @@ High/critical findings fail the pipeline; any accepted false positive must be ad
 Provision the infrastructure once the scan is clean:
 
 ```bash
-terraform plan  -var-file=environments/dev/terraform.tfvars.example
-terraform apply -var-file=environments/dev/terraform.tfvars.example
+terraform plan -var-file=terraform.tfvars -out=tfplan
+terraform apply -var-file=terraform.tfvars
 ```
 
 ---
