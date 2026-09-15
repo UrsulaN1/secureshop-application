@@ -2,22 +2,16 @@
 
 **A complete DevSecOps + GitOps implementation guide**, built and reviewed by:
 
-- **DevOps Engineer** (source control, Terraform, CI/CD)·
-- **Developer** (application, Maven, JUnit)·
-- **Security Engineer** (SonarQube, GitGuardian, OWASP, Trivy, Vault)·
-- **Cloud/Platform Engineer** (AWS, EKS, Kubernetes, Helm, ArgoCD)·
-- **SRE** (Prometheus, Grafana, Alertmanager, logging)·
-- **Tech Lead** (final review for accuracy and consistency).
+- **DevOps Engineer** — source control, Terraform, CI/CD
+- **Developer** — application, Maven, JUnit
+- **Security Engineer** — SonarQube, GitGuardian, OWASP, Trivy, Vault
+- **Cloud/Platform Engineer** — AWS, EKS, Kubernetes, Helm, ArgoCD
+- **SRE** — Prometheus, Grafana, Alertmanager, logging
+- **Tech Lead** — final review for accuracy and consistency
 
-This README contains **only instructions** — every configuration file, manifest, and source file it
-references lives in this repository at the path shown. Follow the sections in order; they match the
-backlog's **Recommended Epic Implementation Sequence** (Epics 1 → 17).
+This README contains **only instructions** — every configuration file, manifest, and source file it references lives in this repository at the path shown. Follow the sections in order; they match the backlog's **Recommended Epic Implementation Sequence** (Epics 1 → 17).
 
-> **Note on CI/CD tooling:** the source backlog (EPIC 4, US-013–015) specifies **GitHub Actions** as
-> the CI/CD engine, so that's what this guide implements end-to-end (`.github/workflows/ci.yml` and
-> `cd.yml`). If your organization also standardizes on Jenkins, the same stages (Maven → JUnit →
-> SonarQube → Dependency-Check → Docker → Trivy → Syft → Cosign → ECR) map directly onto a
-> `Jenkinsfile`
+> **Note on CI/CD tooling:** The source backlog (EPIC 4, US-013–015) specifies **GitHub Actions** as the CI/CD engine, so that is what this guide implements end-to-end (`.github/workflows/ci.yml` and `cd.yml`). If your organization also standardizes on Jenkins, the same stages — Maven → JUnit → SonarQube → Dependency-Check → Docker → Trivy → Syft → Cosign → ECR — map directly onto a `Jenkinsfile`.
 
 ---
 
@@ -30,7 +24,7 @@ backlog's **Recommended Epic Implementation Sequence** (Epics 1 → 17).
 | Terraform | Infrastructure as Code | ≥ 1.9 |
 | Java 17 + Maven | Application build | Temurin 17 |
 | Docker | Container builds | ≥ 24 |
-| kubectl | Kubernetes control | matching EKS 1.30 |
+| `kubectl` | Kubernetes control | Matching EKS 1.30 |
 | Helm | Package manager for Kubernetes | ≥ 3.14 |
 | ArgoCD CLI | GitOps deployments | ≥ 2.11 |
 | Vault CLI | Secrets management | ≥ 1.17 |
@@ -38,59 +32,371 @@ backlog's **Recommended Epic Implementation Sequence** (Epics 1 → 17).
 | Syft | SBOM generation | ≥ 1.16 |
 | Trivy | Container/IaC scanning | ≥ 0.55 |
 | Checkov | Terraform scanning | ≥ 3.2 |
-| ggshield (GitGuardian) | Secret scanning | ≥ 1.34 |
+| `ggshield` (GitGuardian) | Secret scanning | ≥ 1.34 |
 
-Install these locally for manual verification; in CI they run automatically inside GitHub Actions.
+Install these locally for manual verification. In CI, they run automatically inside GitHub Actions.
 
 ---
 
 ## EPIC 1 — Source Control & Project Foundation
-**Owner: DevOps Engineer** · Technology: Git, GitHub, Slack
 
-### US-001 — Create the GitHub repository
-1. Create a new **private** GitHub repository named `secureshop`.
-2. Copy this entire project structure into it (see the **Repository Layout** section at the bottom
-   of this README for the full tree).
-3. Confirm the root `.gitignore` (provided) is present — it excludes `target/`, `.terraform/`,
-   `*.tfstate`, `*.env`, credential files, and scan-report output, so no secrets or noisy build
-   artifacts are ever committed.
-4. Commit and push:
-   ```bash
-   git init
-   git add .
-   git commit -m "chore: initial SecureShop repository structure"
-   git branch -M main
-   git remote add origin git@github.com:<your-org>/secureshop.git
-   git push -u origin main
-   ```
+**Owner:** DevOps Engineer  
+**Technology:** Git, GitHub, Slack, Jira
 
-### US-002 — Establish the Git branching strategy
-1. In **GitHub → Settings → Branches**, add a branch protection rule for `main`.
-2. Branching convention (document this in the repo wiki or `CONTRIBUTING.md`):
-   - `main` — protected, always deployable, source of truth for `dev` GitOps sync.
-   - `feature/<ticket-id>-<short-description>` — all new work.
-   - `release/<version>` — optional, cut before a production promotion.
-3. Enable **"Require a pull request before merging"** and **"Do not allow bypassing the above
-   settings"** to disable direct pushes to `main`.
+### US-001 — Create the GitHub Repository
 
-### US-003 — Configure GitHub pull-request controls
-1. On the same branch protection rule for `main`, enable:
-   - **Require a pull request before merging** → **Require approvals: 1** (minimum).
-   - **Require status checks to pass before merging** → select the jobs defined in
-     `.github/workflows/ci.yml` (`secret-scan`, `build-test-scan`, `terraform-security`,
-     `ci-summary`) once they've run at least once (GitHub only lists checks that have executed).
-   - **Require branches to be up to date before merging**.
-2. This guarantees no code reaches `main` without review and a green CI/security gate.
+1. Create a new **private** GitHub repository named `secureshop-application`.
+2. **Uncheck** the following options:
+   - `Add README`
+   - `Add .gitignore`
+   - `Choose a license`
+3. Prepare your existing SecureShop local repository:
 
-### US-004 — Integrate Slack notifications
-1. In Slack, create an **Incoming Webhook** for a `#secureshop-ci` channel (Slack app directory →
-   "Incoming Webhooks").
-2. Add the webhook URL as a GitHub Actions secret: **Settings → Secrets and variables → Actions →
-   New repository secret** → name it `SLACK_WEBHOOK_URL`.
-3. The webhook is already wired into `.github/workflows/cd.yml` (final `Slack notification` step)
-   and into Alertmanager (`monitoring/kube-prometheus-stack-values.yaml`) and Falcosidekick
-   (`falco/falco-values.yaml`) for pipeline, deployment, and security-alert notifications. No
-   secret values or credentials are ever included in the message payloads.
+```bash
+cd ~/secureshop-application
+ls -la
+
+git init -b main
+git branch --show-current
+
+# Configure Git user identity if not already set.
+git config --global user.name "YOUR NAME"
+git config --global user.email "YOUR_GITHUB_EMAIL"
+git config --global --list
+
+# Create an empty initialization commit.
+git commit --allow-empty -m "chore: initialize main branch"
+
+# Connect local Git to GitHub.
+git remote add origin https://github.com/<YOUR-ORG>/secureshop-application.git
+git remote -v
+
+# Push only the empty main branch first.
+git push -u origin main
+
+# Create the feature branch for your Jira story.
+git switch -c US-001-create-git-hub-repository
+git branch
+
+# Perform a dry run before staging files.
+git status
+git add -n .
+git add .
+
+# Confirm the root .gitignore is present.
+# It excludes target/, .terraform/, *.tfstate, *.env, credential files,
+# and scan-report output so no secrets or noisy build artifacts are committed.
+
+# Commit the original project files to US-001.
+git commit -m "US-001 Create GitHub repository and import SecureShop application"
+
+# Check commit history.
+git log --oneline --decorate --graph --all
+
+# Push US-001 to GitHub.
+git push -u origin US-001-create-git-hub-repository
+```
+
+For all User Stories in Jira, update their status following the workflow.
+
+---
+
+### US-002 — Establish the Git Branching Strategy
+
+1. In GitHub, navigate to:
+
+   **Your Repo → Settings → Rules → Rulesets**
+
+2. Click **New ruleset → New branch ruleset**.
+3. Name the ruleset:
+
+   `Protect main branch`
+
+4. Configure the following parameters:
+
+   - **Enforcement status:** `Active`
+   - **Target:** `main`
+   - Enable **Require a pull request before merging**.
+   - Enable **Block force pushes**.
+   - Enable **Restrict deletions**.
+   - Enable **Require conversation resolution before merging**.
+   - Enable **Do not allow bypassing the above settings** to disable direct pushes to `main`.
+
+---
+
+### US-003 — Configure GitHub Pull-Request Controls
+
+#### 1. Configure Pull-Request Settings
+
+In GitHub, navigate to:
+
+**Your Repo → Settings → General → Pull Requests**
+Configure the following:
+
+- **Allow merge commits:** Optional / Off
+- **Allow squash merging:** ON
+- **Allow rebase merging:** Optional
+- **Automatically delete head branches:** ON
+- **Require a pull request before merging:** Require at least `1` approval
+- **Require status checks to pass before merging:** Select the jobs defined in `.github/workflows/ci.yml` after they have run at least once:
+  - `secret-scan`
+  - `build-test-scan`
+  - `terraform-security`
+  - `ci-summary`
+
+> GitHub only lists status checks that have already executed at least once.
+
+Enable **Require branches to be up to date before merging**.
+
+This guarantees that no code reaches `main` without review and a green CI/security gate.
+
+#### 2. Create Your First Pull Request
+
+1. Go to **GitHub → Your feature branch**.
+2. Select **Compare & pull request**.
+3. Configure:
+   - **base:** `main`
+   - **compare:** `your-feature-branch`
+4. Merge and close the Pull Request.
+5. Confirm the Pull Request appears in the Jira story under **Development**.
+
+#### 3. Synchronize Your Local `main` Branch
+
+```bash
+git switch main
+git pull --ff-only origin main
+git status
+
+# Delete the local feature branch.
+git branch -d SS-164-create-git-hub-repository
+
+# Delete the remote branch if it was not auto-deleted.
+git push origin --delete SS-164-create-git-hub-repository
+```
+
+#### Standard Feature Branch Workflow
+
+Use this workflow for every future Jira story:
+
+```bash
+git switch main
+git pull --ff-only origin main
+
+git switch -c <next-jira-issue>  # Create and switch to a new local feature branch.
+
+git status
+git add .
+git commit -m "<your-jira-story-summary>"
+git push -u origin <next-jira-issue-feature-branch-created>
+```
+
+---
+
+### US-004 — Connect GitHub to Jira
+
+#### 1. Install GitHub for Atlassian
+
+1. Navigate to **Jira → Apps → Explore more apps**.
+2. Search for **GitHub for Atlassian**.
+3. Click **Get app → Get it now**.
+4. Go to **Apps → Manage your apps → GitHub for Atlassian → Get started**.
+5. Select **Continue → GitHub Cloud → Next**.
+6. Authenticate to GitHub.
+7. Select your GitHub organization.
+8. Under repository access, choose **Only select repositories → Your repository**.
+9. Verify that `secureshop-application` is connected under:
+
+   **Jira → Apps → Manage your apps → GitHub for Atlassian**
+
+#### 2. Automate Jira Status Transitions
+
+Once GitHub for Jira is connected correctly, Jira can react to GitHub development events and move your stories automatically. Atlassian supports DevOps automation triggers including **Branch created**, **Pull request created**, and **Pull request merged**.
+
+Create three separate Jira Automation rules under:
+**Space settings → Automation → Create flow → Create from scratch**
+
+##### Rule 1 — Branch Created → In Progress
+
+- **Trigger:** Search for `Branch created`
+- **Condition:** Click **Add condition → Work item fields condition**
+  - **Field:** `Status`
+  - **Condition:** `equals`
+  - **Value:** `Selected for Development`
+- **Action:** Click **+** underneath **Branch created → Action → Transition work item**
+- **Destination status:** `In Progress`
+- **Rule name:** `GitHub Branch Created → In Progress`
+- Click **Save and enable**.
+
+##### Rule 2 — Pull Request Created → Testing
+
+- **Trigger:** Search for `Pull request created`
+- **Condition:** Choose **Work item fields condition**
+  - **Field:** `Status`
+  - **Condition:** `equals`
+  - **Value:** `In Progress`
+- **Action:** `Transition work item`
+- **Destination status:** `Testing`
+- **Rule name:** `Pull request created → Testing`
+- Click **Save and enable**.
+
+##### Rule 3 — Pull Request Merged → Done
+
+- **Trigger:** Search for `Pull request merged`
+- **Condition:** Choose **Work item fields condition**
+  - **Field:** `Status`
+  - **Condition:** `equals`
+  - **Value:** `Testing`
+- **Action:** `Transition work item`
+- **Destination status:** `Done`
+- **Rule name:** `Pull request created → Done`
+- Click **Save and enable**.
+
+#### 3. Confirm the Jira Workflow
+
+Navigate to:
+**Space settings → Work types → Story → Edit workflow**
+
+Confirm that the workflow transitions are correctly reflected by your Jira board and configured automation flow.
+
+---
+
+### US-005 — Integrate Slack Notifications
+
+#### 1. Create the Slack Channel
+
+In Slack, create the following channel:
+
+`#secureshop-ci`
+
+#### 2. Create a Slack Application for SecureShop
+
+1. Open Slack's app-management page.
+2. Click **Create New App → From scratch**.
+3. Configure:
+   - **App Name:** `SecureShop Notifications`
+   - **Workspace:** `<your Slack workspace>`
+4. Click **Create App**.
+
+#### 3. Enable Incoming Webhooks
+
+1. In the Slack app configuration screen, select **Features → Incoming Webhooks**.
+2. Toggle **Activate Incoming Webhooks** to **ON**.
+3. Click **Add New Webhook to Workspace**.
+4. Select `#secureshop-ci`.
+5. Click **Allow**.
+
+#### 4. Test the Slack Webhook
+
+Run the following from your terminal:
+
+```bash
+read -s -p "Paste Slack webhook URL: " SLACK_WEBHOOK_URL
+echo
+
+curl --fail-with-body \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  --data '{"text":"✅ SecureShop Slack webhook integration test successful."}' \
+  "$SLACK_WEBHOOK_URL"
+```
+
+A successful request returns:
+
+```text
+ok
+```
+
+#### 5. Store the Webhook in GitHub Actions
+
+Navigate to:
+**Repository → Settings → Secrets and variables → Actions → Secrets → New repository secret**
+
+Configure:
+
+- **Name:** `SLACK_WEBHOOK_URL`
+- **Value:** `https://hooks.slack.com/services/...`
+
+Click **Add secret**.
+
+#### 6. Verify `.github/workflows/cd.yml`
+
+From the repository root, run:
+
+```bash
+grep -n -i "slack" .github/workflows/cd.yml
+grep -n "SLACK_WEBHOOK_URL" .github/workflows/cd.yml
+```
+
+The workflow should contain a Slack notification step similar to the following:
+
+```yaml
+- name: Slack notification
+  if: always()
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  run: |
+    curl --fail-with-body \
+      -X POST \
+      -H 'Content-Type: application/json' \
+      --data "{\"text\":\"SecureShop CD workflow completed with status: ${{ job.status }}\"}" \
+      "$SLACK_WEBHOOK_URL"
+```
+
+#### 7. Trigger GitHub Actions and Verify the CI/CD Notification
+
+```bash
+git stash
+git switch main
+git pull --ff-only origin main
+
+git switch -c <next-jira-issue>  # Create and switch to a new local feature branch.
+
+git status
+git add .
+git commit -m "<your-jira-story-summary>"
+git push -u origin <next-jira-issue-feature-branch-created>
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
